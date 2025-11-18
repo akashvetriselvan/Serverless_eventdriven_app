@@ -20,11 +20,9 @@ Both are written in **Python 3.12**, using the **boto3 AWS SDK**, and play key r
 Triggered automatically when a new file is uploaded to the S3 bucket.
 It captures the filename and stores it in the DynamoDB table named **`files`**.
 
-🔹 Code:
+🔹 Code:python
 
-```python
 import boto3
-
 def lambda_handler(event, context):
     # Get uploaded file info from S3 event
     record = event['Records'][0]
@@ -63,9 +61,8 @@ def lambda_handler(event, context):
 **Purpose:**
 Exposes an API endpoint (via API Gateway) that retrieves all stored file records from DynamoDB and returns them as JSON.
 
-🔹 Code:
+🔹 Code:python
 
-```python
 import boto3
 import json
 
@@ -161,8 +158,3 @@ You can monitor:
   Pre-installed in the Lambda runtime, used to interact with S3 and DynamoDB.
 
 ---
-
-🧑‍💻 Author
-
-Akash V — Cloud & DevOps Enthusiast ☁️
-Focus: AWS | Serverless | Terraform | CI/CD | Docker | Kubernetes
