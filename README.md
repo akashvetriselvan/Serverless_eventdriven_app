@@ -9,7 +9,7 @@ It’s a practical, real-world cloud project that showcases automation, scalabil
 
 ## ⚙️ Architecture Overview
 
-![Architecture Diagram](/mnt/data/A_diagram_in_the_image_illustrates_a_serverless_ar.png)
+![Architecture Diagram]([/mnt/data/A_diagram_in_the_image_illustrates_a_serverless_ar.png](https://drive.google.com/file/d/1KOoYxp_OK-RiI3xwF9dMmkkkGaRbJ8Jo/view?usp=sharing))
 
 ### AWS Services Used
 
@@ -173,6 +173,3 @@ By completing this project, you learned:
 🌍 [LinkedIn]([https://linkedin.com](https://www.linkedin.com/in/akashvetriselvan/)) | [GitHub]([https://github.com](https://github.com/akashvetriselvan))
 
 ---
-
-
-Would you like me to now generate a **short GitHub “About” summary + topic tags (keywords)** for your repo so it looks polished and professional on your GitHub profile?
