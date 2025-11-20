@@ -1,9 +1,3 @@
-Perfect 👍 — here’s your **final `README.md`** customized with your actual AWS resource names:
-✅ **S3 Bucket → `serverless_event4`**
-✅ **DynamoDB Table → `files`**
-
----
-
 # 🌐 Serverless Event-Driven File Tracker (AWS Free Tier Project)
 
 ## 📘 Overview
