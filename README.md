@@ -9,7 +9,8 @@ It’s a practical, real-world cloud project that showcases automation, scalabil
 
 ## ⚙️ Architecture Overview
 
-![Architecture Diagram]((https://drive.google.com/file/d/1KOoYxp_OK-RiI3xwF9dMmkkkGaRbJ8Jo/view?usp=sharing))
+<img width="1536" height="1024" alt="ChatGPT Image Nov 20, 2025, 01_32_11 PM" src="https://github.com/user-attachments/assets/c77d4e4d-e880-4e00-a222-222c3adcee13" />
+
 
 ### AWS Services Used
 
@@ -170,6 +171,5 @@ By completing this project, you learned:
 
 **Akash V** — Cloud & DevOps Enthusiast ☁️
 💼 Focus: AWS | Serverless | Terraform | CI/CD | Docker | Kubernetes
-🌍 [LinkedIn]((https://www.linkedin.com/in/akashvetriselvan/)) | [GitHub]((https://github.com/akashvetriselvan))
 
 ---
