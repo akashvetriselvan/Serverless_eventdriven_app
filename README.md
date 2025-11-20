@@ -1,69 +1,95 @@
-⚡ AWS Lambda Functions — Serverless Event-Driven App
-
-This folder contains two AWS Lambda functions used in the **Serverless Event-Driven File Tracker Project**.
-Both are written in **Python 3.12**, using the **boto3 AWS SDK**, and play key roles in automating file handling and data retrieval.
-
----
-
-📁 Lambda Functions Overview
-
-| Function Name         | Purpose                                              | Trigger     | Connected Service |
-| --------------------- | ---------------------------------------------------- | ----------- | ----------------- |
-| `processUploadedFile` | Triggered by S3 upload, stores filename in DynamoDB  | S3 Event    | DynamoDB          |
-| `getFilesFunction`    | Returns all stored filenames through an API endpoint | API Gateway | DynamoDB          |
+Perfect 👍 — here’s your **final `README.md`** customized with your actual AWS resource names:
+✅ **S3 Bucket → `serverless_event4`**
+✅ **DynamoDB Table → `files`**
 
 ---
 
-🧩 1️⃣ processUploadedFile.py
+# 🌐 Serverless Event-Driven File Tracker (AWS Free Tier Project)
 
-**Purpose:**
-Triggered automatically when a new file is uploaded to the S3 bucket.
-It captures the filename and stores it in the DynamoDB table named **`files`**.
+## 📘 Overview
 
-🔹 Code:
+This project demonstrates a **serverless event-driven architecture** on AWS that automatically processes file uploads, stores metadata, and exposes data through a REST API endpoint — all using **AWS Free Tier services**.
+It’s a practical, real-world cloud project that showcases automation, scalability, and integration across AWS services without managing any servers.
+
+---
+
+## ⚙️ Architecture Overview
+
+![Architecture Diagram](/mnt/data/A_diagram_in_the_image_illustrates_a_serverless_ar.png)
+
+### AWS Services Used
+
+| Service                | Purpose                                             |
+| ---------------------- | --------------------------------------------------- |
+| **Amazon S3**          | Stores uploaded files and triggers Lambda functions |
+| **AWS Lambda**         | Processes uploaded files and retrieves metadata     |
+| **Amazon DynamoDB**    | Stores filenames in a NoSQL table                   |
+| **Amazon API Gateway** | Provides public REST API endpoint `/files`          |
+| **AWS CloudWatch**     | Logs Lambda events for debugging and monitoring     |
+| **AWS IAM**            | Controls secure access between AWS services         |
+
+---
+
+## 🔁 Workflow
+
+1. **File Upload** — A user uploads a file to the **S3 bucket** `serverless_event4`.
+2. **S3 Trigger** — The upload automatically triggers the Lambda function `processUploadedFile`.
+3. **Lambda Processing** — The Lambda extracts the filename and stores it in the **DynamoDB table** `files`.
+4. **Data Retrieval** — Another Lambda function `getFilesFunction` reads all filenames from DynamoDB.
+5. **API Access** — Users fetch data through a public API endpoint via API Gateway.
+
+📈 **Flow Diagram:**
+
+```
+S3 (serverless_event4) → processUploadedFile Lambda → DynamoDB (files)
+                                            ↑
+                                         getFilesFunction Lambda
+                                            ↑
+                                       API Gateway (/files)
+                                            ↑
+                                          Browser
+```
+
+---
+
+## 🧩 Lambda Functions
+
+### 1️⃣ processUploadedFile.py
+
+Triggered by S3 → Extracts filename → Stores it in DynamoDB.
 
 ```python
 import boto3
 
 def lambda_handler(event, context):
-    # Get uploaded file info from S3 event
     record = event['Records'][0]
     filename = record['s3']['object']['key']
 
-    # Connect to DynamoDB
     dynamodb = boto3.resource('dynamodb')
     table = dynamodb.Table('files')
 
-    # Insert file record
     table.put_item(Item={"filename": filename})
 
     print(f"Saved to DynamoDB: {filename}")
 
-    return {
-        "status": "saved",
-        "filename": filename
-    }
+    return {"status": "saved", "filename": filename}
 ```
 
-🔹 Trigger:
+**Trigger:**
 
-* **Amazon S3 → Event notification**
-* Type: *All object create events*
-* Destination: *Lambda function (processUploadedFile)*
+* S3 bucket: `serverless_event4`
+* Event type: *All object create events*
 
-🔹 Permissions Required:
+**Permissions:**
 
 * `AmazonDynamoDBFullAccess`
-* `AWSLambdaBasicExecutionRole` (for CloudWatch logging)
+* `AWSLambdaBasicExecutionRole`
 
 ---
 
-🧩 2️⃣ getFilesFunction.py
+### 2️⃣ getFilesFunction.py
 
-**Purpose:**
-Exposes an API endpoint (via API Gateway) that retrieves all stored file records from DynamoDB and returns them as JSON.
-
-🔹 Code:
+Triggered by API Gateway → Retrieves all filenames from DynamoDB → Returns as JSON.
 
 ```python
 import boto3
@@ -83,86 +109,76 @@ def lambda_handler(event, context):
     }
 ```
 
-🔹 Trigger:
+**Trigger:**
 
-* **API Gateway → HTTP API route**
-* Method: `GET`
-* Resource path: `/files`
-* Integration: Lambda function (`getFilesFunction`)
-
-🔹 Permissions Required:
-
+* API Gateway HTTP API → `/files`
+  **Permissions:**
 * `AmazonDynamoDBReadOnlyAccess`
 * `AWSLambdaBasicExecutionRole`
 
 ---
 
-⚙️ Lambda Environment Details
+## 🧪 Testing Steps
 
-| Setting          | Value                                                             |
-| ---------------- | ----------------------------------------------------------------- |
-| **Runtime**      | Python 3.12                                                       |
-| **Architecture** | x86_64                                                            |
-| **Timeout**      | Default (3 seconds is enough for this project)                    |
-| **Handler**      | `lambda_function.lambda_handler`                                  |
-| **Region**       | ap-south-1 (keep consistent across S3, DynamoDB, and API Gateway) |
+1. Upload a file to S3 → `serverless_event4`.
+2. Wait for the S3 → Lambda trigger to execute.
+3. Check DynamoDB → `files` table → **Explore table items**.
+4. Access the API Gateway endpoint (example):
 
----
+   ```
+   https://your-api-id.execute-api.ap-south-1.amazonaws.com/files
+   ```
+5. Expected Output:
 
-🧠 How Both Lambdas Work Together
-
-```
-File Upload (S3)
-       ↓ (Event Trigger)
-processUploadedFile (Lambda)
-       ↓
- DynamoDB (Stores filename)
-       ↑
-getFilesFunction (Lambda)
-       ↑ (API Gateway /files)
-       ↑
-      Browser or App
-```
-
-✅ **Result:**
-Every file you upload to S3 automatically gets recorded in DynamoDB, and you can view the list anytime using the public API endpoint.
+   ```json
+   [
+     {"filename": "hello.txt"},
+     {"filename": "report.pdf"}
+   ]
+   ```
 
 ---
 
-🔍 Logs & Monitoring
+## 📸 Screenshots (Add these to your repo)
 
-Both Lambdas automatically send execution logs to **Amazon CloudWatch** under:
-
-```
-/aws/lambda/processUploadedFile
-/aws/lambda/getFilesFunction
-```
-
-You can monitor:
-
-* Function invocations
-* Errors or permission issues
-* DynamoDB write/read confirmations
+| Feature        | Example Screenshot               |
+| -------------- | -------------------------------- |
+| S3 Upload      | `screenshots/s3-upload.png`      |
+| DynamoDB Table | `screenshots/dynamodb-table.png` |
+| Lambda Logs    | `screenshots/lambda-logs.png`    |
+| API Response   | `screenshots/api-gateway.png`    |
 
 ---
 
-🧾 Summary
+## 💡 Real-World Applications
 
-| Function            | Trigger              | Action                            | Output                        |
-| ------------------- | -------------------- | --------------------------------- | ----------------------------- |
-| processUploadedFile | S3 upload            | Writes filename to DynamoDB       | Returns `{"status": "saved"}` |
-| getFilesFunction    | API Gateway `/files` | Reads all filenames from DynamoDB | Returns JSON list             |
-
----
-
-🧰 Libraries Used
-
-* **boto3** – AWS SDK for Python
-  Pre-installed in the Lambda runtime, used to interact with S3 and DynamoDB.
+* Automated document or image upload tracking
+* File processing & metadata extraction
+* Invoice/report management workflows
+* Data ingestion for analytics
+* Scalable backend for upload-based web apps
 
 ---
 
-🧑‍💻 Author
+## 🧠 Learning Outcomes
 
-Akash V — Cloud & DevOps Enthusiast ☁️
-Focus: AWS | Serverless | Terraform | CI/CD | Docker | Kubernetes
+By completing this project, you learned:
+
+* Event-driven automation with **S3 triggers**
+* **Lambda → DynamoDB → API Gateway** integration
+* Using **boto3 SDK** in Lambda for AWS interactions
+* **IAM roles** and permissions management
+* Testing and debugging via **CloudWatch Logs**
+
+---
+
+## 🧑‍💻 Author
+
+**Akash V** — Cloud & DevOps Enthusiast ☁️
+💼 Focus: AWS | Serverless | Terraform | CI/CD | Docker | Kubernetes
+🌍 [LinkedIn]([https://linkedin.com](https://www.linkedin.com/in/akashvetriselvan/)) | [GitHub]([https://github.com](https://github.com/akashvetriselvan))
+
+---
+
+
+Would you like me to now generate a **short GitHub “About” summary + topic tags (keywords)** for your repo so it looks polished and professional on your GitHub profile?
