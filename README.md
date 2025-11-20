@@ -226,6 +226,3 @@ You’ll gain hands-on experience in:
 🌍 [LinkedIn](https://linkedin.com/in/akashvetriselvan/) | [GitHub](https://github.com/akashvetriselvan)
 
 ---
-
-
-Would you like me to create a **small "About" section + topic tags (keywords)** for your GitHub repo to make it look even more polished when published?
