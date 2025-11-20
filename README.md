@@ -2,56 +2,47 @@
 
 ## 📘 Overview
 
-This project demonstrates a **serverless event-driven architecture** on AWS that automatically processes file uploads, stores metadata, and exposes data through a REST API endpoint — all using **AWS Free Tier services**.
-It’s a practical, real-world cloud project that showcases automation, scalability, and integration across AWS services without managing any servers.
+This project demonstrates a **serverless event-driven architecture** on AWS that automatically processes file uploads, stores metadata, and provides an API for retrieving that data.
+It’s built entirely on **AWS Free Tier** using **Amazon S3**, **Lambda**, **DynamoDB**, **API Gateway**, **CloudWatch**, and **IAM** — with Python 3.12 as the runtime.
 
 ---
 
-## ⚙️ Architecture Overview
+## ⚙️ Architecture Diagram
 
-<img width="1536" height="1024" alt="ChatGPT Image Nov 20, 2025, 01_32_11 PM" src="https://github.com/user-attachments/assets/c77d4e4d-e880-4e00-a222-222c3adcee13" />
+<img width="1536" height="1024" alt="ChatGPT Image Nov 20, 2025, 01_32_11 PM" src="https://github.com/user-attachments/assets/bdd5a129-cd46-430f-b32b-243d7c059f2e" />
 
-
-### AWS Services Used
-
-| Service                | Purpose                                             |
-| ---------------------- | --------------------------------------------------- |
-| **Amazon S3**          | Stores uploaded files and triggers Lambda functions |
-| **AWS Lambda**         | Processes uploaded files and retrieves metadata     |
-| **Amazon DynamoDB**    | Stores filenames in a NoSQL table                   |
-| **Amazon API Gateway** | Provides public REST API endpoint `/files`          |
-| **AWS CloudWatch**     | Logs Lambda events for debugging and monitoring     |
-| **AWS IAM**            | Controls secure access between AWS services         |
 
 ---
 
-## 🔁 Workflow
+## 🧩 AWS Services Breakdown
 
-1. **File Upload** — A user uploads a file to the **S3 bucket** `serverless_event4`.
-2. **S3 Trigger** — The upload automatically triggers the Lambda function `processUploadedFile`.
-3. **Lambda Processing** — The Lambda extracts the filename and stores it in the **DynamoDB table** `files`.
-4. **Data Retrieval** — Another Lambda function `getFilesFunction` reads all filenames from DynamoDB.
-5. **API Access** — Users fetch data through a public API endpoint via API Gateway.
+### 🗂️ 1️⃣ Amazon S3 (Bucket: `serverless_event4`)
 
-📈 **Flow Diagram:**
+**Purpose:** Stores uploaded files and triggers Lambda events.
 
-```
-S3 (serverless_event4) → processUploadedFile Lambda → DynamoDB (files)
-                                            ↑
-                                         getFilesFunction Lambda
-                                            ↑
-                                       API Gateway (/files)
-                                            ↑
-                                          Browser
-```
+* **Bucket name:** `serverless_event4`
+* **Event trigger:** *All object create events*
+* **Trigger target:** `processUploadedFile` Lambda
+* **Permissions:**
+
+  * Lambda needs read access to S3 events (`s3:GetObject`)
+  * S3 needs permission to invoke Lambda
+
+📁 **What Happens:**
+When you upload a file (like `hello.txt`), S3 automatically sends an event to Lambda.
 
 ---
 
-## 🧩 Lambda Functions
+### ⚡ 2️⃣ AWS Lambda
 
-### 1️⃣ processUploadedFile.py
+**Purpose:** Runs your automation code without managing servers.
 
-Triggered by S3 → Extracts filename → Stores it in DynamoDB.
+| Function              | Trigger     | Task                                               | Output                        |
+| --------------------- | ----------- | -------------------------------------------------- | ----------------------------- |
+| `processUploadedFile` | S3 Upload   | Extracts filename and saves it in DynamoDB         | `{ "status": "saved" }`       |
+| `getFilesFunction`    | API Gateway | Reads all filenames from DynamoDB and returns JSON | `[{"filename": "hello.txt"}]` |
+
+#### 📄 processUploadedFile.py
 
 ```python
 import boto3
@@ -62,108 +53,169 @@ def lambda_handler(event, context):
 
     dynamodb = boto3.resource('dynamodb')
     table = dynamodb.Table('files')
-
     table.put_item(Item={"filename": filename})
 
     print(f"Saved to DynamoDB: {filename}")
-
     return {"status": "saved", "filename": filename}
 ```
 
-**Trigger:**
-
-* S3 bucket: `serverless_event4`
-* Event type: *All object create events*
-
-**Permissions:**
-
-* `AmazonDynamoDBFullAccess`
-* `AWSLambdaBasicExecutionRole`
-
----
-
-### 2️⃣ getFilesFunction.py
-
-Triggered by API Gateway → Retrieves all filenames from DynamoDB → Returns as JSON.
+#### 📄 getFilesFunction.py
 
 ```python
-import boto3
-import json
+import boto3, json
 
 def lambda_handler(event, context):
     dynamodb = boto3.resource('dynamodb')
     table = dynamodb.Table('files')
-
     response = table.scan()
-    items = response['Items']
 
     return {
         "statusCode": 200,
         "headers": {"Content-Type": "application/json"},
-        "body": json.dumps(items)
+        "body": json.dumps(response['Items'])
     }
 ```
 
-**Trigger:**
+✅ **Runtime:** Python 3.12
+✅ **Architecture:** x86_64
+✅ **Monitoring:** CloudWatch Logs
+✅ **Permissions:**
 
-* API Gateway HTTP API → `/files`
-  **Permissions:**
-* `AmazonDynamoDBReadOnlyAccess`
+* `AmazonDynamoDBFullAccess` (for write Lambda)
+* `AmazonDynamoDBReadOnlyAccess` (for read Lambda)
 * `AWSLambdaBasicExecutionRole`
+
+---
+
+### 🗃️ 3️⃣ Amazon DynamoDB (Table: `files`)
+
+**Purpose:** Stores file metadata (filename).
+
+* **Table name:** `files`
+* **Partition key:** `filename` (String)
+* **Access type:**
+
+  * Write access: `processUploadedFile`
+  * Read access: `getFilesFunction`
+
+🧩 **Example Data:**
+
+| filename   |
+| ---------- |
+| hello.txt  |
+| report.pdf |
+
+---
+
+### 🌐 4️⃣ API Gateway
+
+**Purpose:** Provides a public REST API to retrieve stored filenames.
+
+| Route    | Method | Integration        | Lambda             |
+| -------- | ------ | ------------------ | ------------------ |
+| `/files` | GET    | Lambda Integration | `getFilesFunction` |
+
+* **Invoke URL Example:**
+
+  ```
+  https://your-api-id.execute-api.ap-south-1.amazonaws.com/files
+  ```
+
+📡 **When you access this URL:**
+
+1. API Gateway triggers `getFilesFunction`
+2. Lambda reads from DynamoDB
+3. API Gateway returns the JSON response
+
+🧾 **Expected Output:**
+
+```json
+[
+  {"filename": "hello.txt"},
+  {"filename": "report.pdf"}
+]
+```
+
+---
+
+### 🧩 5️⃣ CloudWatch
+
+**Purpose:** Logs every Lambda execution and helps in debugging.
+
+* Log group names:
+
+  ```
+  /aws/lambda/processUploadedFile
+  /aws/lambda/getFilesFunction
+  ```
+* You can view:
+
+  * Function start and end times
+  * Errors or missing permissions
+  * Data processed by Lambda
+
+---
+
+### 🔐 6️⃣ IAM Roles
+
+**Purpose:** Manages secure access between AWS services.
+
+| Role                | Attached Policies                     |
+| ------------------- | ------------------------------------- |
+| LambdaExecutionRole | AWSLambdaBasicExecutionRole           |
+| WriteLambdaRole     | AmazonDynamoDBFullAccess              |
+| ReadLambdaRole      | AmazonDynamoDBReadOnlyAccess          |
+| S3InvokePermission  | Grants S3 permission to invoke Lambda |
 
 ---
 
 ## 🧪 Testing Steps
 
-1. Upload a file to S3 → `serverless_event4`.
-2. Wait for the S3 → Lambda trigger to execute.
-3. Check DynamoDB → `files` table → **Explore table items**.
-4. Access the API Gateway endpoint (example):
+1. **Upload File to S3:**
+   Go to the S3 bucket `serverless_event4` → Upload `test.txt`.
+2. **Lambda Trigger:**
+   S3 event triggers `processUploadedFile` automatically.
+3. **Check DynamoDB:**
+   Go to `files` table → “Explore table items” → confirm filename is saved.
+4. **Access API:**
+   Open your API URL in a browser:
 
    ```
    https://your-api-id.execute-api.ap-south-1.amazonaws.com/files
    ```
-5. Expected Output:
-
-   ```json
-   [
-     {"filename": "hello.txt"},
-     {"filename": "report.pdf"}
-   ]
-   ```
+5. **View Output:**
+   JSON list of filenames appears — success! 🎉
 
 ---
 
-## 📸 Screenshots (Add these to your repo)
+## 📸 Screenshots (for GitHub)
 
-| Feature        | Example Screenshot               |
-| -------------- | -------------------------------- |
-| S3 Upload      | `screenshots/s3-upload.png`      |
-| DynamoDB Table | `screenshots/dynamodb-table.png` |
-| Lambda Logs    | `screenshots/lambda-logs.png`    |
-| API Response   | `screenshots/api-gateway.png`    |
+* S3 bucket event trigger setup
+* DynamoDB table items
+* CloudWatch logs showing Lambda execution
+* API output in browser
 
 ---
 
-## 💡 Real-World Applications
+## 💡 Real-World Use Cases
 
-* Automated document or image upload tracking
-* File processing & metadata extraction
-* Invoice/report management workflows
-* Data ingestion for analytics
-* Scalable backend for upload-based web apps
+* Automated document or image tracking systems
+* File metadata extraction for analytics
+* Invoice or report management workflows
+* Serverless file ingestion pipelines
+* Scalable upload APIs for web/mobile apps
 
 ---
 
 ## 🧠 Learning Outcomes
 
-By completing this project, you learned:
+You’ll gain hands-on experience in:
 
-* Event-driven automation with **S3 triggers**
-* **Lambda → DynamoDB → API Gateway** integration
-* Using **boto3 SDK** in Lambda for AWS interactions
-* **IAM roles** and permissions management
-* Testing and debugging via **CloudWatch Logs**
+* Building **event-driven serverless workflows**
+* Creating **Lambda → DynamoDB → API Gateway** integrations
+* Managing IAM permissions
+* Monitoring and debugging using CloudWatch
+* Deploying fully automated backend systems
 
 ---
 
@@ -171,5 +223,9 @@ By completing this project, you learned:
 
 **Akash V** — Cloud & DevOps Enthusiast ☁️
 💼 Focus: AWS | Serverless | Terraform | CI/CD | Docker | Kubernetes
+🌍 [LinkedIn](https://linkedin.com/in/akashvetriselvan/) | [GitHub](https://github.com/akashvetriselvan)
 
 ---
+
+
+Would you like me to create a **small "About" section + topic tags (keywords)** for your GitHub repo to make it look even more polished when published?
