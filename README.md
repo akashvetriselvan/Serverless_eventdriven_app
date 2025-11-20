@@ -1,4 +1,4 @@
-# 🌐 Serverless Event-Driven File Tracker (AWS Free Tier Project)
+# 🌐 Serverless Event-Driven File Tracker With AWS
 
 ## 📘 Overview
 
